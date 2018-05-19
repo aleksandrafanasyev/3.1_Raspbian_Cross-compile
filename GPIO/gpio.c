@@ -41,15 +41,18 @@ void errExit(const char * msg)
 		closelog();
 		exit(EXIT_FAILURE);
 	}
-	if (fprintf(conf_des,"%d", led_gpio_num) <= 0){
+	if (fprintf(conf_des,"%d", led_gpio_num) <= 0)
 		syslog(LOG_ERR,"error write in unexport file for led gpio");
-	}
-	if (fprintf(conf_des,"%d", but_gpio_num) <= 0){
+	if (fflush(conf_des) == EOF)
+		syslog(LOG_ERR,"error fflush unexport file");
+	if (fprintf(conf_des,"%d", but_gpio_num) <= 0)
 		syslog(LOG_ERR,"error write in unexport file for button gpio");
-	}
-	if (fclose(conf_des) == EOF){
+	if (fflush(conf_des) == EOF)
+		syslog(LOG_ERR,"error fflush unexport file");
+
+	if (fclose(conf_des) == EOF)
 		syslog(LOG_ERR,"error close unexport file");
-	}
+	
 
 	closelog();
 	exit(EXIT_FAILURE);
@@ -99,6 +102,10 @@ int main(int argc,char *  argv[])
 	}
 
 	//export GPIO for led and button
+
+//TODO
+//check for GPIO busy
+//
 	if ((conf_des=fopen(name_export,"w")) == NULL){
 		syslog(LOG_ERR,"error in open export file");
 		closelog();
@@ -109,70 +116,113 @@ int main(int argc,char *  argv[])
 		closelog();
 		exit(EXIT_FAILURE);
 	}
+	if (fflush(conf_des) == EOF){
+		syslog(LOG_ERR,"error fflush in export file");
+		FILE * unexport;
+		unexport = fopen(name_unexport,"w"); 
+		fprintf(unexport,"%d", led_gpio_num);
+		fflush(unexport);
+		fclose(unexport);
+		closelog();
+		exit(EXIT_FAILURE);
+	}
+
 //TODO
 //check for GPIO busy
 //
-
 	if (fprintf(conf_des,"%d", but_gpio_num) <= 0){
 		syslog(LOG_ERR,"error write in export file");
 		FILE * unexport;
 		unexport = fopen(name_unexport,"w"); 
 		fprintf(unexport,"%d", led_gpio_num);
+		fflush(unexport);
 		fclose(unexport);
 		closelog();
 		exit(EXIT_FAILURE);
 	}
-//TODO
-//check for GPIO busy
-//
-	if (fclose(conf_des) == EOF){
-		syslog(LOG_ERR,"error close export file");
+	if (fflush(conf_des) == EOF){
+		syslog(LOG_ERR,"error fflush in export file");
+		FILE * unexport;
+		unexport = fopen(name_unexport,"w"); 
+		fprintf(unexport,"%d", led_gpio_num);
+		fflush(unexport);
+		fprintf(unexport,"%d", but_gpio_num);
+		fflush(unexport);
+		fclose(unexport);
+		closelog();
+		exit(EXIT_FAILURE);
 	}
+	if (fclose(conf_des) == EOF)
+		syslog(LOG_ERR,"error close export file. errno=%d. %s",errno, strerror(errno));
+	
+//TODO
+//check for open GPIO's
+//
+	sleep(1);
 	//configure gpio direction for led
-	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/%d/direction", led_gpio_num) <= 0)
+	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/gpio%d/direction", led_gpio_num) <= 0)
 		errExit("snprintf");
 	if ((conf_des = fopen(filename,"w")) == NULL)
 		errExit("open direction for led");
 	if (fprintf(conf_des, "in") <=0)
 		errExit("write direction for led");
+	if (fflush(conf_des) == EOF)
+		errExit("fflush in file direction for led");
 	if (fclose(conf_des) == EOF)
 		syslog(LOG_ERR, "error close direction file for led");
 
 	//configure gpio direction for button
-	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/%d/direction", but_gpio_num) <= 0)
+	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/gpio%d/direction", but_gpio_num) <= 0)
 		errExit("snprintf");
 	if ((conf_des = fopen(filename,"w")) == NULL)
 		errExit("open direction for button");
 	if (fprintf(conf_des, "out") <=0)
 		errExit("write direction for button");
+	if (fflush(conf_des) == EOF)
+		errExit("fflush in file direction for button");
 	if (fclose(conf_des) == EOF)
 		syslog(LOG_ERR, "error close direction file for button");
-//TODO
-//set active_low parametr for GPIO (default is active)
-//
+
+	//configure active_low parametr for button
+	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/gpio%d/active_low", but_gpio_num) <= 0)
+		errExit("snprintf");
+	if ((conf_des = fopen(filename,"w")) == NULL)
+		errExit("open active_low for button");
+	if (fprintf(conf_des, "1") <=0)
+		errExit("write active in active_low file for button");
+	if (fflush(conf_des) == EOF)
+		errExit("fflush in file active_low for button");
+	if (fclose(conf_des) == EOF)
+		syslog(LOG_ERR, "error close active_low file for button");
+
 
 	//configure edge for button
-	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/%d/edge", but_gpio_num) <= 0)
+	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/gpio%d/edge", but_gpio_num) <= 0)
 		errExit("snprintf");
 	if ((conf_des = fopen(filename,"w")) == NULL)
 		errExit("open edge for button");
-	if (fprintf(conf_des, "both") <=0)
-		errExit("write direction for button");
+	if (fprintf(conf_des, "both\n") <=0)
+		errExit("write both in edge for button");
+	if (fflush(conf_des) == EOF)
+		errExit("fflush in file edge for button");
 	if (fclose(conf_des) == EOF)
-		syslog(LOG_ERR, "error close direction file for button");
+		syslog(LOG_ERR, "error close edge file for button");
+
+printf("QQQQQQqq\n");
 
 	//open value for led
-	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/%d/value", led_gpio_num) <= 0)
+	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/gpio%d/value", led_gpio_num) <= 0)
 		errExit("snprintf");
 	if ((led_des = open(filename,O_SYNC|O_WRONLY)) == -1)
 		errExit("open value for led");
 	//open value for button and do first read (need for edge)
-	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/%d/value", but_gpio_num) <= 0)
+	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/gpio%d/value", but_gpio_num) <= 0)
 		errExit("snprintf");
 	if ((but_des = open(filename,O_RDONLY)) == -1)
 		errExit("open value for button");
 	if (read(but_des,&but_val, sizeof(but_val)) == -1)
 		errExit("read from value for button");
+
 	struct pollfd pollfd[1];
 	pollfd[0].fd = but_des;
 	pollfd[0].events = POLLPRI | POLLERR;
@@ -180,9 +230,13 @@ int main(int argc,char *  argv[])
 
 	//main cycle
 	while(term_flag == 0){
+
+printf("YYYYYYYYYYQQqq\n");
 		//waiting cick for button 
 		if (poll(pollfd, 1, -1) == -1)
-			    errExit("poll");
+			errExit("poll");
+
+printf("ZZZZZZZZZZZZzzzQqq\n");
 		// handle the event
 		if (lseek(but_des, 0, SEEK_SET) == -1)
 			errExit("lseek file value for button");
