@@ -2,7 +2,7 @@
 
 Для кроскомпиляции программы необходимо задать в переменной CROSS_COMPILE путь к toolchain.
 
-make CROSS_COMPILE=<toolchain path> target
+make CROSS_COMPILE=toolchain_path target
 или
 make host
 
@@ -17,7 +17,7 @@ make host
 
 Для кроскомпиляции программы необходимо задать в переменной CROSS_COMPILE путь к toolchain.
 
-make CROSS_COMPILE=<toolchain path> target
+make CROSS_COMPILE=toolchain_path target
 или
 make host
 
