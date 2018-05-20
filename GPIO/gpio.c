@@ -210,11 +210,17 @@ printf("QQQQQQqq\n");
 	while(term_flag == 0){
 
 printf("YYYYYYYYYYQQqq\n");
+		
 		//waiting cick for button 
-		if (poll(pollfd, 1, -1) == -1)
-			errExit("poll");
-
+		if (poll(pollfd, 1, -1) == -1){
+			if (term_flag == 1){
+				break;
+			}else{
+				errExit("poll");
+			}
+		}
 printf("ZZZZZZZZZZZZzzzQqq\n");
+		
 		// handle the event
 		if (lseek(but_des, 0, SEEK_SET) == -1)
 			errExit("lseek file value for button");
