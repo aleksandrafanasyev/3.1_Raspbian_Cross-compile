@@ -80,10 +80,7 @@ int main(int argc,char *  argv[])
 		closelog();
 		exit(EXIT_FAILURE);
 	}
-//TODO
-//check for GPIO's is used
-//
-
+	
 	//set new handler for SIGTERM and SIGINT                                                              
 	struct sigaction act;                                                                                 
 	sigemptyset(&act.sa_mask);                                                                            
@@ -99,11 +96,6 @@ int main(int argc,char *  argv[])
 	}
 
 	//export GPIO for led and button
-
-//TODO
-//check for GPIO busy
-//
-
 	if (snprintf(led_gpio_str,4,"%d",led_gpio_num) < 0){
 		syslog(LOG_ERR,"error snprintf");
 		closelog();
@@ -138,9 +130,6 @@ int main(int argc,char *  argv[])
 	if (close(conf_des) == -1)
 		syslog(LOG_ERR,"error close export file. errno=%d. %s",errno, strerror(errno));
 	
-//TODO
-//check for open GPIO's
-//
 	sleep(1);// wait for creat files GPIO
 	//configure gpio direction for led
 	char * ldir_val = "out";
@@ -186,8 +175,6 @@ int main(int argc,char *  argv[])
 	if (close(conf_des) == -1)
 		syslog(LOG_ERR,"close file edge for button");
 
-printf("QQQQQQqq\n");
-
 	//open value for led
 	if (snprintf(filename,sizeof(filename),"/sys/class/gpio/gpio%d/value", led_gpio_num) <= 0)
 		errExit("snprintf");
@@ -209,7 +196,7 @@ printf("QQQQQQqq\n");
 	//main cycle
 	while(term_flag == 0){
 
-printf("YYYYYYYYYYQQqq\n");
+printf("Kyyyyyy\n");
 		
 		//waiting cick for button 
 		if (poll(pollfd, 1, -1) == -1){
@@ -219,7 +206,7 @@ printf("YYYYYYYYYYQQqq\n");
 				errExit("poll");
 			}
 		}
-printf("ZZZZZZZZZZZZzzzQqq\n");
+printf("Kuuuuuu\n");
 		
 		// handle the event
 		if (lseek(but_des, 0, SEEK_SET) == -1)
